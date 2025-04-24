@@ -192,20 +192,28 @@
         const rows = text.split("\n").slice(1);
         const countries = new Set();
         const ages = new Set();
+        const countryAgeMap = new Map();
+
         cardinalData = rows.map(row => {
           const cols = row.split(",");
           const [name, country, imageUrl, age, url] = cols;
           if (!name) return null;
           countries.add(country);
           ages.add(age);
+
+          if (!countryAgeMap.has(country)) {
+            countryAgeMap.set(country, new Set());
+          }
+          countryAgeMap.get(country).add(age);
+
           return { name, country, imageUrl, age, url };
         }).filter(Boolean);
 
-        populateFilters(Array.from(countries), Array.from(ages));
+        populateFilters(Array.from(countries), Array.from(ages), countryAgeMap);
         renderCardinals(cardinalData);
       });
 
-    function populateFilters(countries, ages) {
+    function populateFilters(countries, ages, countryAgeMap) {
       const countrySelect = document.getElementById("countryFilter");
       countries.sort().forEach(country => {
         const option = document.createElement("option");
@@ -221,6 +229,8 @@
         option.textContent = age;
         ageSelect.appendChild(option);
       });
+
+      disableAgeOptions(countrySelect, ageSelect, countryAgeMap);
     }
 
     function filterCardinals() {
@@ -250,6 +260,22 @@
         `;
         container.appendChild(card);
       });
+    }
+
+    function disableAgeOptions(countrySelect, ageSelect, countryAgeMap) {
+      const selectedCountry = countrySelect.value;
+      const ageOptions = ageSelect.querySelectorAll("option");
+      
+      ageOptions.forEach(option => option.disabled = false);
+
+      if (selectedCountry) {
+        const availableAges = countryAgeMap.get(selectedCountry) || new Set();
+        ageOptions.forEach(option => {
+          if (!availableAges.has(option.value)) {
+            option.disabled = true;
+          }
+        });
+      }
     }
 
     const conclaveDate = new Date("2025-05-06T10:00:00Z");
