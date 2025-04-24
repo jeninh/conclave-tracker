@@ -241,6 +241,7 @@
                (!selectedAge || cardinal.age === selectedAge);
       });
       renderCardinals(filtered);
+      disableOptions(document.getElementById("countryFilter"), document.getElementById("ageFilter"), getCountryAgeMap());
     }
 
     function renderCardinals(cardinals) {
@@ -296,6 +297,17 @@
       } else {
         countryOptions.forEach(option => option.disabled = false);
       }
+    }
+
+    function getCountryAgeMap() {
+      const countryAgeMap = new Map();
+      cardinalData.forEach(({ country, age }) => {
+        if (!countryAgeMap.has(country)) {
+          countryAgeMap.set(country, new Set());
+        }
+        countryAgeMap.get(country).add(age);
+      });
+      return countryAgeMap;
     }
 
     const conclaveDate = new Date("2025-05-06T10:00:00Z");
