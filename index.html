@@ -5,12 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Papal Conclave Tracker</title>
   <style>
+    :root {
+      --bg-light: #faf6f0;
+      --bg-dark: #1e1e1e;
+      --text-light: #3c2f2f;
+      --text-dark: #e0dcd6;
+      --card-light: white;
+      --card-dark: #2a2a2a;
+      --note-light: #6b4e4e;
+      --note-dark: #bfaeae;
+    }
     body {
       font-family: Georgia, serif;
-      background: linear-gradient(to bottom, #faf6f0, #f0ebdc);
-      color: #3c2f2f;
+      background: var(--bg-light);
+      color: var(--text-light);
       margin: 0;
       padding: 2rem;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background: var(--bg-dark);
+      color: var(--text-dark);
     }
     header {
       text-align: center;
@@ -24,16 +39,22 @@
     h1 {
       font-size: 3rem;
       font-weight: 900;
-      color: #2e1d1d;
+      color: inherit;
     }
     .subtitle {
       font-style: italic;
-      color: #5a4949;
+      color: var(--note-light);
+    }
+    body.dark-mode .subtitle {
+      color: var(--note-dark);
     }
     .note {
       font-size: 0.9rem;
-      color: #7a5f5f;
+      color: var(--note-light);
       margin-top: 0.5rem;
+    }
+    body.dark-mode .note {
+      color: var(--note-dark);
     }
     .countdown {
       display: inline-block;
@@ -48,13 +69,16 @@
       font-size: 2rem;
       text-align: center;
       margin: 3rem 0 1.5rem;
-      color: #4a2f2f;
+      color: inherit;
     }
     .info-note {
       text-align: center;
       font-size: 1rem;
-      color: #6b4e4e;
+      color: var(--note-light);
       margin-bottom: 2rem;
+    }
+    body.dark-mode .info-note {
+      color: var(--note-dark);
     }
     .grid {
       display: grid;
@@ -62,11 +86,15 @@
       gap: 2rem;
     }
     .card {
-      background: white;
+      background: var(--card-light);
       border-radius: 1rem;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       overflow: hidden;
-      transition: box-shadow 0.3s ease;
+      transition: box-shadow 0.3s ease, background 0.3s;
+      cursor: pointer;
+    }
+    body.dark-mode .card {
+      background: var(--card-dark);
     }
     .card:hover {
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
@@ -86,7 +114,10 @@
     .card p {
       margin: 0.25rem 0;
       font-size: 0.9rem;
-      color: #6b4e4e;
+      color: var(--note-light);
+    }
+    body.dark-mode .card p {
+      color: var(--note-dark);
     }
     footer {
       margin-top: 4rem;
@@ -94,9 +125,24 @@
       font-size: 0.875rem;
       color: gray;
     }
+    footer a {
+      color: var(--note-light);
+      text-decoration: underline;
+    }
+    .dark-toggle {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      color: inherit;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <button class="dark-toggle" onclick="document.body.classList.toggle('dark-mode')">🌓</button>
   <header>
     <img src="https://www.vatican.va/etc/designs/vatican/library/clientlibs/themes/homepage_sedesvacans/images/sedes-vacans.png" alt="Sede Vacante Logo" class="logo">
     <h1>Papal Conclave Tracker</h1>
@@ -127,10 +173,13 @@
         container.innerHTML = "";
         rows.forEach(row => {
           const cols = row.split(",");
-          if (cols.length < 4) return;
-          const [name, country, imageUrl, age] = cols;
+          if (cols.length < 5) return;
+          const [name, country, imageUrl, age, url] = cols;
           const card = document.createElement("div");
           card.className = "card";
+          card.onclick = () => {
+            if (url) window.open(url, '_blank');
+          };
           card.innerHTML = `
             ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
             <div class="card-content">
