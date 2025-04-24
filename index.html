@@ -230,7 +230,7 @@
         ageSelect.appendChild(option);
       });
 
-      disableAgeOptions(countrySelect, ageSelect, countryAgeMap);
+      disableOptions(countrySelect, ageSelect, countryAgeMap);
     }
 
     function filterCardinals() {
@@ -262,19 +262,39 @@
       });
     }
 
-    function disableAgeOptions(countrySelect, ageSelect, countryAgeMap) {
+    function disableOptions(countrySelect, ageSelect, countryAgeMap) {
       const selectedCountry = countrySelect.value;
-      const ageOptions = ageSelect.querySelectorAll("option");
-      
-      ageOptions.forEach(option => option.disabled = false);
+      const selectedAge = ageSelect.value;
 
+      const countryOptions = countrySelect.querySelectorAll("option");
+      const ageOptions = ageSelect.querySelectorAll("option");
+
+      // Disable age options based on country selection
       if (selectedCountry) {
         const availableAges = countryAgeMap.get(selectedCountry) || new Set();
         ageOptions.forEach(option => {
-          if (!availableAges.has(option.value)) {
+          if (!availableAges.has(option.value) && option.value !== "") {
             option.disabled = true;
+          } else {
+            option.disabled = false;
           }
         });
+      } else {
+        ageOptions.forEach(option => option.disabled = false);
+      }
+
+      // Disable country options based on age selection
+      if (selectedAge) {
+        countryOptions.forEach(option => {
+          const availableCountries = cardinalData.filter(cardinal => cardinal.age === selectedAge).map(cardinal => cardinal.country);
+          if (!availableCountries.includes(option.value) && option.value !== "") {
+            option.disabled = true;
+          } else {
+            option.disabled = false;
+          }
+        });
+      } else {
+        countryOptions.forEach(option => option.disabled = false);
       }
     }
 
