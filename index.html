@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Papal Conclave Tracker</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background: linear-gradient(to bottom, #faf6f0, #f0ebdc);
+      color: #3c2f2f;
+      margin: 0;
+      padding: 2rem;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .logo {
+      width: 120px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 3rem;
+      font-weight: 900;
+      color: #2e1d1d;
+    }
+    .subtitle {
+      font-style: italic;
+      color: #5a4949;
+    }
+    .note {
+      font-size: 0.9rem;
+      color: #7a5f5f;
+      margin-top: 0.5rem;
+    }
+    .countdown {
+      display: inline-block;
+      background: #8b0000;
+      color: white;
+      padding: 0.5rem 1.5rem;
+      border-radius: 9999px;
+      font-size: 1.25rem;
+      margin-top: 1rem;
+    }
+    .section-title {
+      font-size: 2rem;
+      text-align: center;
+      margin: 3rem 0 1.5rem;
+      color: #4a2f2f;
+    }
+    .info-note {
+      text-align: center;
+      font-size: 1rem;
+      color: #6b4e4e;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: box-shadow 0.3s ease;
+    }
+    .card:hover {
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+    .card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .card-content {
+      padding: 1rem;
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      margin: 0 0 0.5rem;
+    }
+    .card p {
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+      color: #6b4e4e;
+    }
+    footer {
+      margin-top: 4rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://www.vatican.va/etc/designs/vatican/library/clientlibs/themes/homepage_sedesvacans/images/sedes-vacans.png" alt="Sede Vacante Logo" class="logo">
+    <h1>Papal Conclave Tracker</h1>
+    <p class="subtitle">Countdown to the election of the next pope</p>
+    <div class="countdown" id="countdown">Loading...</div>
+    <p class="note">Note: This date is not confirmed — it's the earliest possible date the conclave can begin.</p>
+  </header>
+
+  <h2 class="section-title">Verified Cardinal Electors</h2>
+  <p class="info-note">More information will appear as details of the conclave are released and once the conclave begins.</p>
+
+  <main class="grid" id="cardinals">
+    <p>Loading cardinals…</p>
+  </main>
+
+  <footer>
+    Made for the faithful. Not affiliated with the Holy See. · <a href="https://github.com/jeninh/conclave-tracker" target="_blank">Open source on GitHub</a>
+  </footer>
+
+  <script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRY9M4jG1colRcse4V5qJBYvw5Ey0vHdAFpwnSnJgiHAu2vB4Gpasb5MnDeA2GU1MFOXo3JyOEJmVEy/pub?gid=0&single=true&output=csv";
+
+    fetch(CSV_URL)
+      .then(response => response.text())
+      .then(text => {
+        const rows = text.split("\n").slice(1); // Skip header
+        const container = document.getElementById("cardinals");
+        container.innerHTML = "";
+        rows.forEach(row => {
+          const cols = row.split(",");
+          if (cols.length < 4) return;
+          const [name, country, imageUrl, age] = cols;
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
+            <div class="card-content">
+              <h2>${name}</h2>
+              <p>${country}</p>
+              <p>Age: ${age}</p>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      });
+
+    const conclaveDate = new Date("2025-05-06T10:00:00Z");
+    const countdown = document.getElementById("countdown");
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = conclaveDate - now;
+      if (diff <= 0) {
+        countdown.textContent = "The conclave has begun!";
+        clearInterval(timer);
+        return;
+      }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      countdown.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    };
+    const timer = setInterval(updateCountdown, 1000);
+    updateCountdown();
+  </script>
+</body>
+</html>
