@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Papal Conclave Tracker</title>
   <style>
     :root {
@@ -139,6 +139,15 @@
       color: inherit;
       cursor: pointer;
     }
+    .filters {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .filters select {
+      font-size: 1rem;
+      padding: 0.4rem;
+      margin: 0 1rem;
+    }
   </style>
 </head>
 <body>
@@ -154,6 +163,17 @@
   <h2 class="section-title">Verified Cardinal Electors</h2>
   <p class="info-note">More information will appear as details of the conclave are released and once the conclave begins.</p>
 
+  <div class="filters">
+    <label for="ageFilter">Filter by Age:</label>
+    <select id="ageFilter">
+      <option value="">All Ages</option>
+    </select>
+    <label for="nationalityFilter">Filter by Nationality:</label>
+    <select id="nationalityFilter">
+      <option value="">All Nationalities</option>
+    </select>
+  </div>
+
   <main class="grid" id="cardinals">
     <p>Loading cardinals…</p>
   </main>
@@ -165,38 +185,108 @@
   <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8ep2FhpQgO9ej6jFgRO5TIU3SbKhHvfs7_vZb8WXVmsx_rdQhlgdO-eB_mSBbRPc9UYQk5rjyhim/pub?gid=117323697&single=true&output=csv";
 
+    const ageFilter = document.getElementById("ageFilter");
+    const nationalityFilter = document.getElementById("nationalityFilter");
+    const container = document.getElementById("cardinals");
+
+    let cardinals = [];
+
     fetch(CSV_URL)
       .then(response => response.text())
       .then(text => {
-        const rows = text.split("\n").slice(1); // Skip header
-        const container = document.getElementById("cardinals");
-        container.innerHTML = "";
-        let anyCardinals = false;
-        rows.forEach(row => {
-          const cols = row.split(",");
-          if (cols.length < 5) return;
-          const [name, country, age, url, imageUrl] = cols;
-          if (!name || !country || !age) return;
-          anyCardinals = true;
-          const card = document.createElement("div");
-          card.className = "card";
-          card.onclick = () => {
-            if (url) window.open(url, '_blank');
-          };
-          card.innerHTML = `
-            ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
-            <div class="card-content">
-              <h2>${name}</h2>
-              <p>${country}</p>
-              <p>Age: ${age}</p>
-            </div>
-          `;
-          container.appendChild(card);
-        });
-        if (!anyCardinals) {
-          container.innerHTML = "<p>No verified cardinal electors available at this time.</p>";
-        }
+        const rows = text.split("\n").slice(1);
+        cardinals = rows.map(row => {
+          const [name, country, age, url, imageUrl] = row.split(",");
+          return { name, country, age, url, imageUrl };
+        }).filter(c => c.name && c.country && c.age);
+
+        populateFilters();
+        updateCards();
       });
+
+    function populateFilters() {
+      const ages = [...new Set(cardinals.map(c => c.age))].sort((a, b) => a - b);
+      const countries = [...new Set(cardinals.map(c => c.country))].sort();
+
+      for (const age of ages) {
+        const option = document.createElement("option");
+        option.value = age;
+        option.textContent = age;
+        ageFilter.appendChild(option);
+      }
+
+      for (const country of countries) {
+        const option = document.createElement("option");
+        option.value = country;
+        option.textContent = country;
+        nationalityFilter.appendChild(option);
+      }
+    }
+
+    ageFilter.addEventListener("change", () => {
+      updateNationalityOptions();
+      updateCards();
+    });
+
+    nationalityFilter.addEventListener("change", () => {
+      updateAgeOptions();
+      updateCards();
+    });
+
+    function updateNationalityOptions() {
+      const selectedAge = ageFilter.value;
+      const allowedCountries = new Set(cardinals
+        .filter(c => !selectedAge || c.age === selectedAge)
+        .map(c => c.country));
+      for (const option of nationalityFilter.options) {
+        if (!option.value) continue;
+        option.disabled = !allowedCountries.has(option.value);
+      }
+    }
+
+    function updateAgeOptions() {
+      const selectedCountry = nationalityFilter.value;
+      const allowedAges = new Set(cardinals
+        .filter(c => !selectedCountry || c.country === selectedCountry)
+        .map(c => c.age));
+      for (const option of ageFilter.options) {
+        if (!option.value) continue;
+        option.disabled = !allowedAges.has(option.value);
+      }
+    }
+
+    function updateCards() {
+      const selectedAge = ageFilter.value;
+      const selectedCountry = nationalityFilter.value;
+      container.innerHTML = "";
+
+      const filtered = cardinals.filter(c => {
+        return (!selectedAge || c.age === selectedAge) &&
+               (!selectedCountry || c.country === selectedCountry);
+      });
+
+      if (!filtered.length) {
+        container.innerHTML = "<p>No matching cardinals found.</p>";
+        return;
+      }
+
+      for (const c of filtered) {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => {
+          if (c.url) window.open(c.url, '_blank');
+        };
+        card.innerHTML = `
+          ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.name}" />` : ""}
+          <div class="card-content">
+            <h2>${c.name}</h2>
+            <p>${c.country}</p>
+            <p>Age: ${c.age}</p>
+          </div>
+        `;
+        container.appendChild(card);
+      }
+    }
 
     const conclaveDate = new Date("2025-05-06T10:00:00Z");
     const countdown = document.getElementById("countdown");
