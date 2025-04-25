@@ -247,6 +247,8 @@
         option.textContent = country;
         countryFilter.appendChild(option);
       });
+      // Apply filters immediately after populating
+      filterCardinals();
     }
 
     function filterCardinals() {
@@ -273,11 +275,13 @@
       const countriesForAge = selectedAge ? new Set(filteredCardinals.filter(card => card.age === selectedAge).map(card => card.country)) : new Set();
       const agesForCountry = selectedCountry ? new Set(filteredCardinals.filter(card => card.country === selectedCountry).map(card => card.age)) : new Set();
 
+      // Update country filter options based on selected age
       const countryFilter = document.getElementById("countryFilter");
       for (let option of countryFilter.options) {
         option.disabled = !countriesForAge.has(option.value) && selectedAge !== '';
       }
 
+      // Update age filter options based on selected country
       const ageFilter = document.getElementById("ageFilter");
       for (let option of ageFilter.options) {
         option.disabled = !agesForCountry.has(option.value) && selectedCountry !== '';
