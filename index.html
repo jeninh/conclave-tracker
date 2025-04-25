@@ -161,7 +161,7 @@
   </header>
 
   <div class="filters">
-    <input type="text" id="searchInput" placeholder="Search by name..." autocomplete="on" />
+    <input type="text" id="searchInput" placeholder="Search by name..." autocomplete="off" />
     <br />
     <label for="ageFilter">Age:</label>
     <select id="ageFilter"><option value="">All Ages</option></select>
@@ -257,8 +257,6 @@
         }).filter(c => c.name && c.age && c.country);
 
         cardinalsData = parsed;
-        const nameList = document.getElementById("nameSuggestions");
-        nameList.innerHTML = parsed.map(c => `<option value="${c.name}">`).join('');
 
         const ages = [...new Set(parsed.map(c => c.age))].sort((a, b) => +a - +b);
         const nationalities = [...new Set(parsed.map(c => c.country))].sort();
