@@ -80,17 +80,6 @@
     body.dark-mode .info-note {
       color: var(--note-dark);
     }
-    .filters {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    .filters select {
-      padding: 0.5rem;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -165,15 +154,6 @@
   <h2 class="section-title">Verified Cardinal Electors</h2>
   <p class="info-note">More information will appear as details of the conclave are released and once the conclave begins.</p>
 
-  <div class="filters">
-    <select id="countryFilter" onchange="filterCardinals()">
-      <option value="">All Nationalities</option>
-    </select>
-    <select id="ageFilter" onchange="filterCardinals()">
-      <option value="">All Ages</option>
-    </select>
-  </div>
-
   <main class="grid" id="cardinals">
     <p>Loading cardinals…</p>
   </main>
@@ -183,132 +163,40 @@
   </footer>
 
   <script>
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRY9M4jG1colRcse4V5qJBYvw5Ey0vHdAFpwnSnJgiHAu2vB4Gpasb5MnDeA2GU1MFOXo3JyOEJmVEy/pub?gid=0&single=true&output=csv";
-    let cardinalData = [];
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8ep2FhpQgO9ej6jFgRO5TIU3SbKhHvfs7_vZb8WXVmsx_rdQhlgdO-eB_mSBbRPc9UYQk5rjyhim/pub?gid=117323697&single=true&output=csv";
 
     fetch(CSV_URL)
       .then(response => response.text())
       .then(text => {
-        const rows = text.split("\n").slice(1);
-        const countries = new Set();
-        const ages = new Set();
-        const countryAgeMap = new Map();
-
-        cardinalData = rows.map(row => {
+        const rows = text.split("\n").slice(1); // Skip header
+        const container = document.getElementById("cardinals");
+        container.innerHTML = "";
+        let anyCardinals = false;
+        rows.forEach(row => {
           const cols = row.split(",");
-          const [name, country, imageUrl, age, url] = cols;
-          if (!name) return null;
-          countries.add(country);
-          ages.add(age);
-
-          if (!countryAgeMap.has(country)) {
-            countryAgeMap.set(country, new Set());
-          }
-          countryAgeMap.get(country).add(age);
-
-          return { name, country, imageUrl, age, url };
-        }).filter(Boolean);
-
-        populateFilters(Array.from(countries), Array.from(ages), countryAgeMap);
-        renderCardinals(cardinalData);
-      });
-
-    function populateFilters(countries, ages, countryAgeMap) {
-      const countrySelect = document.getElementById("countryFilter");
-      countries.sort().forEach(country => {
-        const option = document.createElement("option");
-        option.value = country;
-        option.textContent = country;
-        countrySelect.appendChild(option);
-      });
-
-      const ageSelect = document.getElementById("ageFilter");
-      ages.sort((a, b) => parseInt(a) - parseInt(b)).forEach(age => {
-        const option = document.createElement("option");
-        option.value = age;
-        option.textContent = age;
-        ageSelect.appendChild(option);
-      });
-
-      disableOptions(countrySelect, ageSelect, countryAgeMap);
-    }
-
-    function filterCardinals() {
-      const selectedCountry = document.getElementById("countryFilter").value;
-      const selectedAge = document.getElementById("ageFilter").value;
-      const filtered = cardinalData.filter(cardinal => {
-        return (!selectedCountry || cardinal.country === selectedCountry) &&
-               (!selectedAge || cardinal.age === selectedAge);
-      });
-      renderCardinals(filtered);
-      disableOptions(document.getElementById("countryFilter"), document.getElementById("ageFilter"), getCountryAgeMap());
-    }
-
-    function renderCardinals(cardinals) {
-      const container = document.getElementById("cardinals");
-      container.innerHTML = "";
-      cardinals.forEach(({ name, country, imageUrl, age, url }) => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.onclick = () => { if (url) window.open(url, '_blank'); };
-        card.innerHTML = `
-          ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
-          <div class="card-content">
-            <h2>${name}</h2>
-            <p>${country}</p>
-            <p>Age: ${age}</p>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function disableOptions(countrySelect, ageSelect, countryAgeMap) {
-      const selectedCountry = countrySelect.value;
-      const selectedAge = ageSelect.value;
-
-      const countryOptions = countrySelect.querySelectorAll("option");
-      const ageOptions = ageSelect.querySelectorAll("option");
-
-      // Disable age options based on country selection
-      if (selectedCountry) {
-        const availableAges = countryAgeMap.get(selectedCountry) || new Set();
-        ageOptions.forEach(option => {
-          if (!availableAges.has(option.value) && option.value !== "") {
-            option.disabled = true;
-          } else {
-            option.disabled = false;
-          }
+          if (cols.length < 5) return;
+          const [name, country, age, url, imageUrl] = cols;
+          if (!name || !country || !age) return;
+          anyCardinals = true;
+          const card = document.createElement("div");
+          card.className = "card";
+          card.onclick = () => {
+            if (url) window.open(url, '_blank');
+          };
+          card.innerHTML = `
+            ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
+            <div class="card-content">
+              <h2>${name}</h2>
+              <p>${country}</p>
+              <p>Age: ${age}</p>
+            </div>
+          `;
+          container.appendChild(card);
         });
-      } else {
-        ageOptions.forEach(option => option.disabled = false);
-      }
-
-      // Disable country options based on age selection
-      if (selectedAge) {
-        countryOptions.forEach(option => {
-          const availableCountries = cardinalData.filter(cardinal => cardinal.age === selectedAge).map(cardinal => cardinal.country);
-          if (!availableCountries.includes(option.value) && option.value !== "") {
-            option.disabled = true;
-          } else {
-            option.disabled = false;
-          }
-        });
-      } else {
-        countryOptions.forEach(option => option.disabled = false);
-      }
-    }
-
-    function getCountryAgeMap() {
-      const countryAgeMap = new Map();
-      cardinalData.forEach(({ country, age }) => {
-        if (!countryAgeMap.has(country)) {
-          countryAgeMap.set(country, new Set());
+        if (!anyCardinals) {
+          container.innerHTML = "<p>No verified cardinal electors available at this time.</p>";
         }
-        countryAgeMap.get(country).add(age);
       });
-      return countryAgeMap;
-    }
 
     const conclaveDate = new Date("2025-05-06T10:00:00Z");
     const countdown = document.getElementById("countdown");
