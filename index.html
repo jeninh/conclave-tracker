@@ -80,15 +80,6 @@
     body.dark-mode .info-note {
       color: var(--note-dark);
     }
-    .filters {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .filters input, .filters select {
-      font-size: 1rem;
-      padding: 0.5rem;
-      margin: 0.5rem;
-    }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -148,6 +139,15 @@
       color: inherit;
       cursor: pointer;
     }
+    .filters {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .filters select {
+      margin: 0 1rem;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -160,19 +160,18 @@
     <p class="note">Note: This date is not confirmed — it's the earliest possible date the conclave can begin.</p>
   </header>
 
-  <div class="filters">
-    <input type="text" id="searchInput" placeholder="Search by name..." autocomplete="off" />
-    <br />
-    <label for="ageFilter">Age:</label>
-    <select id="ageFilter"><option value="">All Ages</option></select>
-    <label for="nationalityFilter">Nationality:</label>
-    <select id="nationalityFilter"><option value="">All Nationalities</option></select>
-    <br />
-    <button onclick="clearFilters()">Clear Filters</button>
-  </div>
-
   <h2 class="section-title">Verified Cardinal Electors</h2>
   <p class="info-note">More information will appear as details of the conclave are released and once the conclave begins.</p>
+
+  <div class="filters">
+    <input type="text" id="searchBar" placeholder="Search for a cardinal by name..." oninput="filterCardinals()">
+    <select id="ageFilter" onchange="filterCardinals()">
+      <option value="">Select Age</option>
+    </select>
+    <select id="countryFilter" onchange="filterCardinals()">
+      <option value="">Select Nationality</option>
+    </select>
+  </div>
 
   <main class="grid" id="cardinals">
     <p>Loading cardinals…</p>
@@ -186,21 +185,37 @@
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8ep2FhpQgO9ej6jFgRO5TIU3SbKhHvfs7_vZb8WXVmsx_rdQhlgdO-eB_mSBbRPc9UYQk5rjyhim/pub?gid=117323697&single=true&output=csv";
 
     let cardinalsData = [];
-    const container = document.getElementById("cardinals");
-    const ageFilter = document.getElementById("ageFilter");
-    const nationalityFilter = document.getElementById("nationalityFilter");
-    const searchInput = document.getElementById("searchInput");
+    let filteredCardinals = [];
 
-    function renderCards(data) {
+    fetch(CSV_URL)
+      .then(response => response.text())
+      .then(text => {
+        const rows = text.split("\n").slice(1); // Skip header
+        rows.forEach(row => {
+          const cols = row.split(",");
+          if (cols.length < 5) return;
+          const [name, country, age, url, imageUrl] = cols;
+          if (!name || !country || !age) return;
+          cardinalsData.push({ name, country, age, url, imageUrl });
+        });
+        filteredCardinals = [...cardinalsData];
+        displayCardinals(filteredCardinals);
+        populateFilters();
+      });
+
+    function displayCardinals(cardinals) {
+      const container = document.getElementById("cardinals");
       container.innerHTML = "";
-      if (data.length === 0) {
-        container.innerHTML = "<p>No cardinals found.</p>";
+      if (cardinals.length === 0) {
+        container.innerHTML = "<p>No cardinals found matching the filters.</p>";
         return;
       }
-      data.forEach(({ name, country, age, url, imageUrl }) => {
+      cardinals.forEach(({ name, country, age, url, imageUrl }) => {
         const card = document.createElement("div");
         card.className = "card";
-        if (url) card.onclick = () => window.open(url, '_blank');
+        card.onclick = () => {
+          if (url) window.open(url, '_blank');
+        };
         card.innerHTML = `
           ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
           <div class="card-content">
@@ -213,65 +228,61 @@
       });
     }
 
-    function updateFilters() {
-      const selectedAge = ageFilter.value;
-      const selectedNationality = nationalityFilter.value;
-      const nameSearch = searchInput.value.toLowerCase();
+    function populateFilters() {
+      const ageFilter = document.getElementById("ageFilter");
+      const countryFilter = document.getElementById("countryFilter");
+      const uniqueAges = [...new Set(cardinalsData.map(card => card.age))].sort();
+      const uniqueCountries = [...new Set(cardinalsData.map(card => card.country))].sort();
 
-      const filtered = cardinalsData.filter(c => {
-        return (!selectedAge || c.age === selectedAge) &&
-               (!selectedNationality || c.country === selectedNationality) &&
-               c.name.toLowerCase().includes(nameSearch);
+      uniqueAges.forEach(age => {
+        const option = document.createElement("option");
+        option.value = age;
+        option.textContent = age;
+        ageFilter.appendChild(option);
       });
 
-      const availableAges = [...new Set(filtered.map(c => c.age))];
-      const availableNationalities = [...new Set(filtered.map(c => c.country))];
-
-      [...ageFilter.options].forEach(opt => {
-        if (!opt.value) return;
-        opt.disabled = !availableAges.includes(opt.value);
+      uniqueCountries.forEach(country => {
+        const option = document.createElement("option");
+        option.value = country;
+        option.textContent = country;
+        countryFilter.appendChild(option);
       });
-
-      [...nationalityFilter.options].forEach(opt => {
-        if (!opt.value) return;
-        opt.disabled = !availableNationalities.includes(opt.value);
-      });
-
-      renderCards(filtered);
     }
 
-    function clearFilters() {
-      searchInput.value = "";
-      ageFilter.value = "";
-      nationalityFilter.value = "";
+    function filterCardinals() {
+      const searchQuery = document.getElementById("searchBar").value.toLowerCase();
+      const selectedAge = document.getElementById("ageFilter").value;
+      const selectedCountry = document.getElementById("countryFilter").value;
+
+      filteredCardinals = cardinalsData.filter(card => {
+        const matchesSearch = card.name.toLowerCase().includes(searchQuery);
+        const matchesAge = selectedAge ? card.age === selectedAge : true;
+        const matchesCountry = selectedCountry ? card.country === selectedCountry : true;
+        return matchesSearch && matchesAge && matchesCountry;
+      });
+
+      displayCardinals(filteredCardinals);
+
       updateFilters();
     }
 
-    fetch(CSV_URL)
-      .then(res => res.text())
-      .then(text => {
-        const rows = text.trim().split("\n").slice(1);
-        const parsed = rows.map(row => {
-          const [name, country, age, url, imageUrl] = row.split(",");
-          return { name, country, age, url, imageUrl };
-        }).filter(c => c.name && c.age && c.country);
+    function updateFilters() {
+      const selectedAge = document.getElementById("ageFilter").value;
+      const selectedCountry = document.getElementById("countryFilter").value;
 
-        cardinalsData = parsed;
+      const countriesForAge = selectedAge ? new Set(filteredCardinals.filter(card => card.age === selectedAge).map(card => card.country)) : new Set();
+      const agesForCountry = selectedCountry ? new Set(filteredCardinals.filter(card => card.country === selectedCountry).map(card => card.age)) : new Set();
 
-        const ages = [...new Set(parsed.map(c => c.age))].sort((a, b) => +a - +b);
-        const nationalities = [...new Set(parsed.map(c => c.country))].sort();
+      const countryFilter = document.getElementById("countryFilter");
+      for (let option of countryFilter.options) {
+        option.disabled = !countriesForAge.has(option.value) && selectedAge !== '';
+      }
 
-        for (let age of ages) {
-          ageFilter.innerHTML += `<option value="${age}">${age}</option>`;
-        }
-        for (let country of nationalities) {
-          nationalityFilter.innerHTML += `<option value="${country}">${country}</option>`;
-        }
-
-        updateFilters();
-      });
-
-    ageFilter.onchange = nationalityFilter.onchange = searchInput.oninput = updateFilters;
+      const ageFilter = document.getElementById("ageFilter");
+      for (let option of ageFilter.options) {
+        option.disabled = !agesForCountry.has(option.value) && selectedCountry !== '';
+      }
+    }
 
     const conclaveDate = new Date("2025-05-06T10:00:00Z");
     const countdown = document.getElementById("countdown");
