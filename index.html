@@ -65,6 +65,35 @@
       font-size: 1.25rem;
       margin-top: 1rem;
     }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    .stat-card {
+      background: var(--card-light);
+      border-radius: 1rem;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: background 0.3s;
+    }
+    body.dark-mode .stat-card {
+      background: var(--card-dark);
+    }
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .stat-card .label {
+      font-size: 0.9rem;
+      color: var(--note-light);
+    }
+    body.dark-mode .stat-card .label {
+      color: var(--note-dark);
+    }
     .section-title {
       font-size: 2rem;
       text-align: center;
@@ -143,6 +172,7 @@
       text-align: center;
       margin-bottom: 2rem;
     }
+    .filters input,
     .filters select {
       margin: 0 1rem;
       padding: 0.5rem;
@@ -158,6 +188,9 @@
     <p class="subtitle">Countdown to the election of the next pope</p>
     <div class="countdown" id="countdown">Loading...</div>
     <p class="note">This is the official date as announced by the Vatican (https://vatican.va)</p>
+
+    <div id="conclave-stats" class="stats-grid">
+    </div>
   </header>
 
   <h2 class="section-title">Verified Cardinal Electors</h2>
@@ -190,7 +223,9 @@
     fetch(CSV_URL)
       .then(response => response.text())
       .then(text => {
-        const rows = text.split("\n").slice(1); // Skip header
+        renderConclaveStats(text);
+
+        const rows = text.split("\n").slice(1);
         rows.forEach(row => {
           const cols = row.split(",");
           if (cols.length < 5) return;
@@ -203,6 +238,40 @@
         populateFilters();
       });
 
+    function renderConclaveStats(csvText) {
+      const lines = csvText.split("\n");
+      const dataRows = lines.slice(1);
+
+      const getG = (sheetRow) => {
+        const row = dataRows[sheetRow - 2];
+        if (!row) return "";
+        const cols = row.split(",");
+        return (cols[6] || "").trim();
+      };
+
+      const stats = [
+        { label: "Total eligible electors",   value: getG(3) },
+        { label: "Cardinal attendance",        value: getG(6) },
+        { label: "Ballots held",               value: getG(9) },
+        { label: "Time since last ballot",     value: getG(12) },
+        { label: "Time until next ballot",     value: getG(14) },
+        { label: "Signal status",              value: getG(16) },
+      ].filter(s => s.value);
+
+      const container = document.getElementById("conclave-stats");
+      container.innerHTML = "";
+
+      stats.forEach(({ label, value }) => {
+        const card = document.createElement("div");
+        card.className = "stat-card";
+        card.innerHTML = `
+          <div class="value">${value}</div>
+          <div class="label">${label}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
     function displayCardinals(cardinals) {
       const container = document.getElementById("cardinals");
       container.innerHTML = "";
@@ -213,9 +282,7 @@
       cardinals.forEach(({ name, country, age, url, imageUrl }) => {
         const card = document.createElement("div");
         card.className = "card";
-        card.onclick = () => {
-          if (url) window.open(url, '_blank');
-        };
+        card.onclick = () => { if (url) window.open(url, '_blank'); };
         card.innerHTML = `
           ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
           <div class="card-content">
@@ -231,79 +298,71 @@
     function populateFilters() {
       const ageFilter = document.getElementById("ageFilter");
       const countryFilter = document.getElementById("countryFilter");
-      const uniqueAges = [...new Set(cardinalsData.map(card => card.age))].sort();
-      const uniqueCountries = [...new Set(cardinalsData.map(card => card.country))].sort();
+      const uniqueAges = [...new Set(cardinalsData.map(c => c.age))].sort();
+      const uniqueCountries = [...new Set(cardinalsData.map(c => c.country))].sort();
 
       uniqueAges.forEach(age => {
-        const option = document.createElement("option");
-        option.value = age;
-        option.textContent = age;
-        ageFilter.appendChild(option);
+        const opt = document.createElement("option");
+        opt.value = age; opt.textContent = age;
+        ageFilter.appendChild(opt);
+      });
+      uniqueCountries.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c; opt.textContent = c;
+        countryFilter.appendChild(opt);
       });
 
-      uniqueCountries.forEach(country => {
-        const option = document.createElement("option");
-        option.value = country;
-        option.textContent = country;
-        countryFilter.appendChild(option);
-      });
-      // Apply filters immediately after populating
       filterCardinals();
     }
 
     function filterCardinals() {
-      const searchQuery = document.getElementById("searchBar").value.toLowerCase();
-      const selectedAge = document.getElementById("ageFilter").value;
-      const selectedCountry = document.getElementById("countryFilter").value;
+      const q = document.getElementById("searchBar").value.toLowerCase();
+      const selAge = document.getElementById("ageFilter").value;
+      const selCountry = document.getElementById("countryFilter").value;
 
-      filteredCardinals = cardinalsData.filter(card => {
-        const matchesSearch = card.name.toLowerCase().includes(searchQuery);
-        const matchesAge = selectedAge ? card.age === selectedAge : true;
-        const matchesCountry = selectedCountry ? card.country === selectedCountry : true;
-        return matchesSearch && matchesAge && matchesCountry;
+      filteredCardinals = cardinalsData.filter(c => {
+        return c.name.toLowerCase().includes(q)
+            && (selAge   ? c.age === selAge        : true)
+            && (selCountry ? c.country === selCountry : true);
       });
 
       displayCardinals(filteredCardinals);
-
       updateFilters();
     }
 
     function updateFilters() {
-      const selectedAge = document.getElementById("ageFilter").value;
-      const selectedCountry = document.getElementById("countryFilter").value;
+      const selAge = document.getElementById("ageFilter").value;
+      const selCountry = document.getElementById("countryFilter").value;
+      const countriesForAge = selAge
+        ? new Set(filteredCardinals.filter(c => c.age === selAge).map(c => c.country))
+        : new Set();
+      const agesForCountry = selCountry
+        ? new Set(filteredCardinals.filter(c => c.country === selCountry).map(c => c.age))
+        : new Set();
 
-      const countriesForAge = selectedAge ? new Set(filteredCardinals.filter(card => card.age === selectedAge).map(card => card.country)) : new Set();
-      const agesForCountry = selectedCountry ? new Set(filteredCardinals.filter(card => card.country === selectedCountry).map(card => card.age)) : new Set();
-
-      // Update country filter options based on selected age
-      const countryFilter = document.getElementById("countryFilter");
-      for (let option of countryFilter.options) {
-        option.disabled = !countriesForAge.has(option.value) && selectedAge !== '';
+      for (let opt of document.getElementById("countryFilter").options) {
+        opt.disabled = selAge && !countriesForAge.has(opt.value);
       }
-
-      // Update age filter options based on selected country
-      const ageFilter = document.getElementById("ageFilter");
-      for (let option of ageFilter.options) {
-        option.disabled = !agesForCountry.has(option.value) && selectedCountry !== '';
+      for (let opt of document.getElementById("ageFilter").options) {
+        opt.disabled = selCountry && !agesForCountry.has(opt.value);
       }
     }
 
     const conclaveDate = new Date("2025-05-07T10:00:00Z");
-    const countdown = document.getElementById("countdown");
-    const updateCountdown = () => {
-      const now = new Date();
-      const diff = conclaveDate - now;
+    const cdEl = document.getElementById("countdown");
+    function updateCountdown() {
+      const diff = conclaveDate - new Date();
       if (diff <= 0) {
-        countdown.textContent = "The conclave has begun!";
+        cdEl.textContent = "The conclave has begun!";
         clearInterval(timer);
         return;
       }
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
-      countdown.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    };
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff / 3600000) % 24);
+      const m = Math.floor((diff / 60000) % 60);
+      const s = Math.floor((diff / 1000) % 60);
+      cdEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
+    }
     const timer = setInterval(updateCountdown, 1000);
     updateCountdown();
   </script>
