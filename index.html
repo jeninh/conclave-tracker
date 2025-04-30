@@ -189,7 +189,28 @@
       padding: 0.5rem;
       font-size: 1rem;
     }
+    /* New chart styling */
+    .charts-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+    .chart-card {
+      background: var(--card-light);
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      padding: 1rem;
+      width: 350px;
+      transition: background 0.3s;
+    }
+    body.dark-mode .chart-card {
+      background: var(--card-dark);
+    }
   </style>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <button class="dark-toggle" onclick="document.body.classList.toggle('dark-mode')">🌓</button>
@@ -207,6 +228,15 @@
       <iframe width="560" height="315" src="https://www.youtube.com/embed/EEM7a3mHMR4?si=3pQHp31ghAD1XPhm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
     </div>
   </header>
+
+  <section class="charts-container">
+    <div class="chart-card">
+      <canvas id="ageChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <canvas id="nationalityChart"></canvas>
+    </div>
+  </section>
 
   <h2 class="section-title">Verified Cardinal Electors</h2>
   <p class="info-note">More information will appear as details of the conclave are released and once the conclave begins.</p>
@@ -246,11 +276,12 @@
           if (cols.length < 5) return;
           const [name, country, age, url, imageUrl] = cols;
           if (!name || !country || !age) return;
-          cardinalsData.push({ name, country, age, url, imageUrl });
+          cardinalsData.push({ name, country, age: parseInt(age, 10), url, imageUrl });
         });
         filteredCardinals = [...cardinalsData];
         displayCardinals(filteredCardinals);
         populateFilters();
+        createCharts();
       });
 
     function renderConclaveStats(csvText) {
@@ -273,7 +304,6 @@
         { label: "Signal status",              value: getG(16) },
       ].filter(s => s.value);
 
-      const liveLink = getG(18);
       const container = document.getElementById("conclave-stats");
       container.innerHTML = "";
 
@@ -314,7 +344,7 @@
     function populateFilters() {
       const ageFilter = document.getElementById("ageFilter");
       const countryFilter = document.getElementById("countryFilter");
-      const uniqueAges = [...new Set(cardinalsData.map(c => c.age))].sort();
+      const uniqueAges = [...new Set(cardinalsData.map(c => c.age))].sort((a,b)=>a-b);
       const uniqueCountries = [...new Set(cardinalsData.map(c => c.country))].sort();
 
       uniqueAges.forEach(age => {
@@ -338,7 +368,7 @@
 
       filteredCardinals = cardinalsData.filter(c => {
         return c.name.toLowerCase().includes(q)
-            && (selAge   ? c.age === selAge        : true)
+            && (selAge   ? c.age == selAge        : true)
             && (selCountry ? c.country === selCountry : true);
       });
 
@@ -350,7 +380,7 @@
       const selAge = document.getElementById("ageFilter").value;
       const selCountry = document.getElementById("countryFilter").value;
       const countriesForAge = selAge
-        ? new Set(filteredCardinals.filter(c => c.age === selAge).map(c => c.country))
+        ? new Set(filteredCardinals.filter(c => c.age == selAge).map(c => c.country))
         : new Set();
       const agesForCountry = selCountry
         ? new Set(filteredCardinals.filter(c => c.country === selCountry).map(c => c.age))
@@ -362,6 +392,52 @@
       for (let opt of document.getElementById("ageFilter").options) {
         opt.disabled = selCountry && !agesForCountry.has(opt.value);
       }
+    }
+
+    function createCharts() {
+      const ageCounts = cardinalsData.reduce((acc, c) => {
+        acc[c.age] = (acc[c.age] || 0) + 1;
+        return acc;
+      }, {});
+      const ageLabels = Object.keys(ageCounts).sort((a,b)=>a-b);
+      const ageData = ageLabels.map(age => ageCounts[age]);
+      const ageCtx = document.getElementById('ageChart').getContext('2d');
+      new Chart(ageCtx, {
+        type: 'bar',
+        data: {
+          labels: ageLabels,
+          datasets: [{
+            label: 'Number of Cardinals',
+            data: ageData
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+
+      const natCounts = cardinalsData.reduce((acc, c) => {
+        acc[c.country] = (acc[c.country] || 0) + 1;
+        return acc;
+      }, {});
+      const natLabels = Object.keys(natCounts);
+      const natData = natLabels.map(c => natCounts[c]);
+      const natCtx = document.getElementById('nationalityChart').getContext('2d');
+      new Chart(natCtx, {
+        type: 'pie',
+        data: {
+          labels: natLabels,
+          datasets: [{
+            data: natData
+          }]
+        },
+        options: {
+          responsive: true
+        }
+      });
     }
 
     const conclaveDate = new Date("2025-05-07T10:00:00Z");
