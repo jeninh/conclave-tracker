@@ -66,11 +66,10 @@
       margin-top: 1rem;
     }
 
-    /* ===== Conclave stats grid ===== */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      justify-content: center; /* center leftover cards */
+      justify-content: center;
       gap: 1rem;
       margin: 2rem 0;
     }
@@ -102,20 +101,10 @@
       color: var(--note-dark);
     }
 
-    /* embed responsiveness */
     .embed-wrapper {
-      position: relative;
-      width: 100%;
-      padding-bottom: 56.25%; /* 16:9 */
-      margin-top: 0.5rem;
+      margin-top: 2rem;
+      text-align: center;
     }
-    .embed-wrapper iframe {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      border: none;
-    }
-
     .section-title {
       font-size: 2rem;
       text-align: center;
@@ -213,6 +202,10 @@
 
     <div id="conclave-stats" class="stats-grid">
     </div>
+
+    <div class="embed-wrapper">
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/EEM7a3mHMR4?si=3pQHp31ghAD1XPhm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
   </header>
 
   <h2 class="section-title">Verified Cardinal Electors</h2>
@@ -293,18 +286,6 @@
         `;
         container.appendChild(card);
       });
-
-      if (liveLink) {
-        const liveCard = document.createElement("div");
-        liveCard.className = "stat-card";
-        liveCard.innerHTML = `
-          <div class="label">Live Chimney Coverage</div>
-          <div class="embed-wrapper">
-            <iframe src="${liveLink}" allowfullscreen></iframe>
-          </div>
-        `;
-        container.appendChild(liveCard);
-      }
     }
 
     function displayCardinals(cardinals) {
