@@ -1,462 +1,573 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Papal Conclave Tracker</title>
-  <style>
-    :root {
-      --bg-light: #faf6f0;
-      --bg-dark: #1e1e1e;
-      --text-light: #3c2f2f;
-      --text-dark: #e0dcd6;
-      --card-light: white;
-      --card-dark: #2a2a2a;
-      --note-light: #6b4e4e;
-      --note-dark: #bfaeae;
-    }
-    body {
-      font-family: Georgia, serif;
-      background: var(--bg-light);
-      color: var(--text-light);
-      margin: 0;
-      padding: 2rem;
-      transition: background 0.3s, color 0.3s;
-    }
-    body.dark-mode {
-      background: var(--bg-dark);
-      color: var(--text-dark);
-    }
-    header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-    .logo {
-      width: 120px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      margin-bottom: 1rem;
-    }
-    h1 {
-      font-size: 3rem;
-      font-weight: 900;
-      color: inherit;
-    }
-    .subtitle {
-      font-style: italic;
-      color: var(--note-light);
-    }
-    body.dark-mode .subtitle {
-      color: var(--note-dark);
-    }
-    .note {
-      font-size: 0.9rem;
-      color: var(--note-light);
-      margin-top: 0.5rem;
-    }
-    body.dark-mode .note {
-      color: var(--note-dark);
-    }
-    .countdown {
-      display: inline-block;
-      background: #8b0000;
-      color: white;
-      padding: 0.5rem 1.5rem;
-      border-radius: 9999px;
-      font-size: 1.25rem;
-      margin-top: 1rem;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Papal Conclave Tracker</title>
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      justify-content: center;
-      gap: 1rem;
-      margin: 2rem 0;
-    }
-    .stat-card {
-      background: var(--card-light);
-      border-radius: 1rem;
-      padding: 1rem;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      text-align: center;
-      transition: background 0.3s;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    body.dark-mode .stat-card {
-      background: var(--card-dark);
-    }
-    .stat-card .value {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
-    .stat-card .label {
-      font-size: 0.9rem;
-      color: var(--note-light);
-    }
-    body.dark-mode .stat-card .label {
-      color: var(--note-dark);
-    }
-
-    .embed-wrapper {
-      margin-top: 2rem;
-      text-align: center;
-    }
-    .section-title {
-      font-size: 2rem;
-      text-align: center;
-      margin: 3rem 0 1.5rem;
-      color: inherit;
-    }
-    .info-note {
-      text-align: center;
-      font-size: 1rem;
-      color: var(--note-light);
-      margin-bottom: 2rem;
-    }
-    body.dark-mode .info-note {
-      color: var(--note-dark);
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 2rem;
-    }
-    .card {
-      background: var(--card-light);
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      overflow: hidden;
-      transition: box-shadow 0.3s ease, background 0.3s;
-      cursor: pointer;
-    }
-    body.dark-mode .card {
-      background: var(--card-dark);
-    }
-    .card:hover {
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    }
-    .card img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-    }
-    .card-content {
-      padding: 1rem;
-    }
-    .card h2 {
-      font-size: 1.25rem;
-      margin: 0 0 0.5rem;
-    }
-    .card p {
-      margin: 0.25rem 0;
-      font-size: 0.9rem;
-      color: var(--note-light);
-    }
-    body.dark-mode .card p {
-      color: var(--note-dark);
-    }
-    footer {
-      margin-top: 4rem;
-      text-align: center;
-      font-size: 0.875rem;
-      color: gray;
-    }
-    footer a {
-      color: var(--note-light);
-      text-decoration: underline;
-    }
-    .dark-toggle {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: transparent;
-      border: none;
-      font-size: 1rem;
-      color: inherit;
-      cursor: pointer;
-    }
-    .filters {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .filters input,
-    .filters select {
-      margin: 0 1rem;
-      padding: 0.5rem;
-      font-size: 1rem;
-    }
-    /* New chart styling */
-    .charts-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 2rem;
-      margin: 2rem 0;
-    }
-    .chart-card {
-      background: var(--card-light);
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      padding: 1rem;
-      width: 350px;
-      transition: background 0.3s;
-    }
-    body.dark-mode .chart-card {
-      background: var(--card-dark);
-    }
-  </style>
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-  <button class="dark-toggle" onclick="document.body.classList.toggle('dark-mode')">🌓</button>
-  <header>
-    <img src="https://www.vatican.va/etc/designs/vatican/library/clientlibs/themes/homepage_sedesvacans/images/sedes-vacans.png" alt="Sede Vacante Logo" class="logo">
-    <h1>Papal Conclave Tracker</h1>
-    <p class="subtitle">Countdown to the election of the next pope</p>
-    <div class="countdown" id="countdown">Loading...</div>
-    <p class="note">This is the official date as announced by the Vatican (https://vatican.va)</p>
-
-    <div id="conclave-stats" class="stats-grid">
-    </div>
-
-    <div class="embed-wrapper">
-      <iframe width="560" height="315" src="https://www.youtube.com/embed/EEM7a3mHMR4?si=3pQHp31ghAD1XPhm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-    </div>
-  </header>
-
-  <section class="charts-container">
-    <div class="chart-card">
-      <canvas id="ageChart"></canvas>
-    </div>
-    <div class="chart-card">
-      <canvas id="nationalityChart"></canvas>
-    </div>
-  </section>
-
-  <h2 class="section-title">Verified Cardinal Electors</h2>
-  <p class="info-note">More information will appear as details of the conclave are released and once the conclave begins.</p>
-
-  <div class="filters">
-    <input type="text" id="searchBar" placeholder="Search for a cardinal by name..." oninput="filterCardinals()">
-    <select id="ageFilter" onchange="filterCardinals()">
-      <option value="">Select Age</option>
-    </select>
-    <select id="countryFilter" onchange="filterCardinals()">
-      <option value="">Select Nationality</option>
-    </select>
-  </div>
-
-  <main class="grid" id="cardinals">
-    <p>Loading cardinals…</p>
-  </main>
-
-  <footer>
-    Made for the faithful. Not affiliated with the Holy See. · <a href="https://github.com/jeninh/conclave-tracker" target="_blank">Open source on GitHub</a>
-  </footer>
-
-  <script>
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8ep2FhpQgO9ej6jFgRO5TIU3SbKhHvfs7_vZb8WXVmsx_rdQhlgdO-eB_mSBbRPc9UYQk5rjyhim/pub?gid=117323697&single=true&output=csv";
-
-    let cardinalsData = [];
-    let filteredCardinals = [];
-
-    fetch(CSV_URL)
-      .then(response => response.text())
-      .then(text => {
-        renderConclaveStats(text);
-
-        const rows = text.split("\n").slice(1);
-        rows.forEach(row => {
-          const cols = row.split(",");
-          if (cols.length < 5) return;
-          const [name, country, age, url, imageUrl] = cols;
-          if (!name || !country || !age) return;
-          cardinalsData.push({ name, country, age: parseInt(age, 10), url, imageUrl });
-        });
-        filteredCardinals = [...cardinalsData];
-        displayCardinals(filteredCardinals);
-        populateFilters();
-        createCharts();
-      });
-
-    function renderConclaveStats(csvText) {
-      const lines = csvText.split("\n");
-      const dataRows = lines.slice(1);
-
-      const getG = (sheetRow) => {
-        const row = dataRows[sheetRow - 2];
-        if (!row) return "";
-        const cols = row.split(",");
-        return (cols[6] || "").trim();
-      };
-
-      const stats = [
-        { label: "Total eligible electors",   value: getG(3) },
-        { label: "Cardinal attendance",        value: getG(6) },
-        { label: "Ballots held",               value: getG(9) },
-        { label: "Time since last ballot",     value: getG(12) },
-        { label: "Time until next ballot",     value: getG(14) },
-        { label: "Signal status",              value: getG(16) },
-      ].filter(s => s.value);
-
-      const container = document.getElementById("conclave-stats");
-      container.innerHTML = "";
-
-      stats.forEach(({ label, value }) => {
-        const card = document.createElement("div");
-        card.className = "stat-card";
-        card.innerHTML = `
-          <div class="value">${value}</div>
-          <div class="label">${label}</div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function displayCardinals(cardinals) {
-      const container = document.getElementById("cardinals");
-      container.innerHTML = "";
-      if (cardinals.length === 0) {
-        container.innerHTML = "<p>No cardinals found matching the filters.</p>";
-        return;
+    <style>
+      :root {
+        --bg-light: #faf6f0;
+        --bg-dark: #1e1e1e;
+        --text-light: #3c2f2f;
+        --text-dark: #e0dcd6;
+        --card-light: white;
+        --card-dark: #2a2a2a;
+        --note-light: #6b4e4e;
+        --note-dark: #bfaeae;
       }
-      cardinals.forEach(({ name, country, age, url, imageUrl }) => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.onclick = () => { if (url) window.open(url, '_blank'); };
-        card.innerHTML = `
-          ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
-          <div class="card-content">
-            <h2>${name}</h2>
-            <p>${country}</p>
-            <p>Age: ${age}</p>
+
+      body {
+        font-family: Georgia, serif;
+        background: var(--bg-light);
+        color: var(--text-light);
+        margin: 0;
+        padding: 2rem;
+        transition: background 0.3s, color 0.3s;
+      }
+
+      body.dark-mode {
+        background: var(--bg-dark);
+        color: var(--text-dark);
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .logo {
+        width: 120px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+      }
+
+      h1 {
+        font-size: 3rem;
+        font-weight: 900;
+        color: inherit;
+      }
+
+      .subtitle {
+        font-style: italic;
+        color: var(--note-light);
+      }
+
+      body.dark-mode .subtitle {
+        color: var(--note-dark);
+      }
+
+      .note {
+        font-size: 0.9rem;
+        color: var(--note-light);
+        margin-top: 0.5rem;
+      }
+
+      body.dark-mode .note {
+        color: var(--note-dark);
+      }
+
+      .countdown {
+        display: inline-block;
+        background: #8b0000;
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 9999px;
+        font-size: 1.25rem;
+        margin-top: 1rem;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        justify-content: center;
+        gap: 1rem;
+        margin: 2rem 0;
+      }
+
+      .stat-card {
+        background: var(--card-light);
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      body.dark-mode .stat-card {
+        background: var(--card-dark);
+      }
+
+      .stat-card .value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-card .label {
+        font-size: 0.9rem;
+        color: var(--note-light);
+      }
+
+      body.dark-mode .stat-card .label {
+        color: var(--note-dark);
+      }
+
+      .embed-wrapper {
+        margin-top: 2rem;
+        text-align: center;
+      }
+
+      .section-title {
+        font-size: 2rem;
+        text-align: center;
+        margin: 3rem 0 1.5rem;
+        color: inherit;
+      }
+
+      .info-note {
+        text-align: center;
+        font-size: 1rem;
+        color: var(--note-light);
+        margin-bottom: 2rem;
+      }
+
+      body.dark-mode .info-note {
+        color: var(--note-dark);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 2rem;
+      }
+
+      .card {
+        background: var(--card-light);
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: box-shadow 0.3s ease, background 0.3s;
+        cursor: pointer;
+      }
+
+      body.dark-mode .card {
+        background: var(--card-dark);
+      }
+
+      .card:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      }
+
+      .card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+      }
+
+      .card-content {
+        padding: 1rem;
+      }
+
+      .card h2 {
+        font-size: 1.25rem;
+        margin: 0 0 0.5rem;
+      }
+
+      .card p {
+        margin: 0.25rem 0;
+        font-size: 0.9rem;
+        color: var(--note-light);
+      }
+
+      body.dark-mode .card p {
+        color: var(--note-dark);
+      }
+
+      footer {
+        margin-top: 4rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: gray;
+      }
+
+      footer a {
+        color: var(--note-light);
+        text-decoration: underline;
+      }
+
+      .dark-toggle {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: transparent;
+        border: none;
+        font-size: 1rem;
+        color: inherit;
+        cursor: pointer;
+      }
+
+      .filters {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .filters input,
+      .filters select {
+        margin: 0 1rem;
+        padding: 0.5rem;
+        font-size: 1rem;
+      }
+
+      .charts-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+      }
+
+      .chart-card {
+        background: var(--card-light);
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        flex: 1 1 300px;
+        max-width: 400px;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      body.dark-mode .chart-card {
+        background: var(--card-dark);
+      }
+
+      .chart-card canvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal.show {
+        display: flex;
+      }
+
+      .modal-content {
+        background: var(--card-light);
+        padding: 2rem;
+        border-radius: 1rem;
+        max-width: 90%;
+        max-height: 90%;
+        overflow-y: auto;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      body.dark-mode .modal-content {
+        background: var(--card-dark);
+        color: var(--text-dark);
+      }
+
+      .close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: transparent;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+      }
+
+      .modal-body {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        margin-top: 1rem;
+      }
+
+      .modal-chart {
+        flex: 1 1 300px;
+        min-width: 300px;
+        height: 400px;
+      }
+
+      .modal-list {
+        flex: 1 1 200px;
+        min-width: 200px;
+        overflow-y: auto;
+      }
+
+      .modal-list ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+
+  <body>
+    <button class="dark-toggle" onclick="document.body.classList.toggle('dark-mode')">
+      🌓
+    </button>
+
+    <header>
+      <img
+        src="https://www.vatican.va/etc/designs/vatican/library/clientlibs/themes/homepage_sedesvacans/images/sedes-vacans.png"
+        alt="Sede Vacante Logo"
+        class="logo"
+      />
+      <h1>Papal Conclave Tracker</h1>
+      <p class="subtitle">
+        Countdown to the election of the next pope
+      </p>
+      <div class="countdown" id="countdown">Loading...</div>
+      <p class="note">
+        This is the official date as announced by the Vatican (https://vatican.va)
+      </p>
+      <div id="conclave-stats" class="stats-grid"></div>
+      <div class="embed-wrapper">
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube.com/embed/EEM7a3mHMR4?si=3pQHp31ghAD1XPhm"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </header>
+
+    <section class="charts-container">
+      <div class="chart-card">
+        <canvas id="ageChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <canvas id="nationalityChart"></canvas>
+      </div>
+    </section>
+
+    <div id="pieModal" class="modal">
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeModal()">×</button>
+        <h2>Nationality Breakdown</h2>
+        <div class="modal-body">
+          <canvas id="modalPieChart" class="modal-chart"></canvas>
+          <div class="modal-list">
+            <h3>Countries with only one cardinal:</h3>
+            <ul id="singleCountriesList"></ul>
           </div>
-        `;
-        container.appendChild(card);
-      });
-    }
+        </div>
+      </div>
+    </div>
 
-    function populateFilters() {
-      const ageFilter = document.getElementById("ageFilter");
-      const countryFilter = document.getElementById("countryFilter");
-      const uniqueAges = [...new Set(cardinalsData.map(c => c.age))].sort((a,b)=>a-b);
-      const uniqueCountries = [...new Set(cardinalsData.map(c => c.country))].sort();
+    <div class="filters">
+      <input type="text" id="searchBar" placeholder="Search for a cardinal by name..." oninput="filterCardinals()" />
+      <select id="ageFilter" onchange="filterCardinals()"><option value="">Select Age</option></select>
+      <select id="countryFilter" onchange="filterCardinals()"><option value="">Select Nationality</option></select>
+    </div>
 
-      uniqueAges.forEach(age => {
-        const opt = document.createElement("option");
-        opt.value = age; opt.textContent = age;
-        ageFilter.appendChild(opt);
-      });
-      uniqueCountries.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c; opt.textContent = c;
-        countryFilter.appendChild(opt);
-      });
+    <main class="grid" id="cardinals">
+      <p>Loading cardinals…</p>
+    </main>
 
-      filterCardinals();
-    }
+    <footer>
+      Made for the faithful. Not affiliated with the Holy See. ·
+      <a href="https://github.com/jeninh/conclave-tracker" target="_blank">
+        Open source on GitHub
+      </a>
+    </footer>
 
-    function filterCardinals() {
-      const q = document.getElementById("searchBar").value.toLowerCase();
-      const selAge = document.getElementById("ageFilter").value;
-      const selCountry = document.getElementById("countryFilter").value;
+    <script>
+      const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8ep2FhpQgO9ej6jFgRO5TIU3SbKhHvfs7_vZb8WXVmsx_rdQhlgdO-eB_mSBbRPc9UYQk5rjyhim/pub?gid=117323697&single=true&output=csv";
 
-      filteredCardinals = cardinalsData.filter(c => {
-        return c.name.toLowerCase().includes(q)
-            && (selAge   ? c.age == selAge        : true)
-            && (selCountry ? c.country === selCountry : true);
-      });
+      let cardinalsData = [];
+      let filteredCardinals = [];
+      let natLabelsAll = [];
+      let natDataAll = [];
+      let singleCountries = [];
 
-      displayCardinals(filteredCardinals);
-      updateFilters();
-    }
+      fetch(CSV_URL)
+        .then(response => response.text())
+        .then(text => {
+          renderConclaveStats(text);
 
-    function updateFilters() {
-      const selAge = document.getElementById("ageFilter").value;
-      const selCountry = document.getElementById("countryFilter").value;
-      const countriesForAge = selAge
-        ? new Set(filteredCardinals.filter(c => c.age == selAge).map(c => c.country))
-        : new Set();
-      const agesForCountry = selCountry
-        ? new Set(filteredCardinals.filter(c => c.country === selCountry).map(c => c.age))
-        : new Set();
+          const rows = text.split("\n").slice(1);
+          rows.forEach(row => {
+            const cols = row.split(",");
+            if (cols.length < 5) return;
+            const [name, country, age, url, imageUrl] = cols;
+            if (!name || !country || !age) return;
+            cardinalsData.push({ name, country, age: parseInt(age, 10), url, imageUrl });
+          });
 
-      for (let opt of document.getElementById("countryFilter").options) {
-        opt.disabled = selAge && !countriesForAge.has(opt.value);
-      }
-      for (let opt of document.getElementById("ageFilter").options) {
-        opt.disabled = selCountry && !agesForCountry.has(opt.value);
-      }
-    }
+          filteredCardinals = [...cardinalsData];
+          displayCardinals(filteredCardinals);
+          populateFilters();
+          createCharts();
+          startCountdown();
+        });
 
-    function createCharts() {
-      const ageCounts = cardinalsData.reduce((acc, c) => {
-        acc[c.age] = (acc[c.age] || 0) + 1;
-        return acc;
-      }, {});
-      const ageLabels = Object.keys(ageCounts).sort((a,b)=>a-b);
-      const ageData = ageLabels.map(age => ageCounts[age]);
-      const ageCtx = document.getElementById('ageChart').getContext('2d');
-      new Chart(ageCtx, {
-        type: 'bar',
-        data: {
-          labels: ageLabels,
-          datasets: [{
-            label: 'Number of Cardinals',
-            data: ageData
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true }
-          }
+      function renderConclaveStats(csvText) {
+        const lines = csvText.split("\n");
+        const dataRows = lines.slice(1);
+        function getG(sheetRow) {
+          const row = dataRows[sheetRow - 2];
+          if (!row) return "";
+          const cols = row.split(",");
+          return cols[6]?.trim() || "";
         }
-      });
-
-      const natCounts = cardinalsData.reduce((acc, c) => {
-        acc[c.country] = (acc[c.country] || 0) + 1;
-        return acc;
-      }, {});
-      const natLabels = Object.keys(natCounts);
-      const natData = natLabels.map(c => natCounts[c]);
-      const natCtx = document.getElementById('nationalityChart').getContext('2d');
-      new Chart(natCtx, {
-        type: 'pie',
-        data: {
-          labels: natLabels,
-          datasets: [{
-            data: natData
-          }]
-        },
-        options: {
-          responsive: true
-        }
-      });
-    }
-
-    const conclaveDate = new Date("2025-05-07T10:00:00Z");
-    const cdEl = document.getElementById("countdown");
-    function updateCountdown() {
-      const diff = conclaveDate - new Date();
-      if (diff <= 0) {
-        cdEl.textContent = "The conclave has begun!";
-        clearInterval(timer);
-        return;
+        const stats = [
+          { label: "Total eligible electors", value: getG(3) },
+          { label: "Cardinal attendance", value: getG(6) },
+          { label: "Ballots held", value: getG(9) },
+          { label: "Time since last ballot", value: getG(12) },
+          { label: "Time until next ballot", value: getG(14) },
+          { label: "Signal status", value: getG(16) },
+        ].filter(s => s.value);
+        const container = document.getElementById("conclave-stats");
+        container.innerHTML = "";
+        stats.forEach(({ label, value }) => {
+          const card = document.createElement("div");
+          card.className = "stat-card";
+          card.innerHTML = `
+            <div class="value">${value}</div>
+            <div class="label">${label}</div>
+          `;
+          container.appendChild(card);
+        });
       }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff / 3600000) % 24);
-      const m = Math.floor((diff / 60000) % 60);
-      const s = Math.floor((diff / 1000) % 60);
-      cdEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
-    }
-    const timer = setInterval(updateCountdown, 1000);
-    updateCountdown();
-  </script>
-</body>
+
+      function displayCardinals(cardinals) {
+        const container = document.getElementById("cardinals");
+        container.innerHTML = "";
+        if (cardinals.length === 0) {
+          container.innerHTML = "<p>No cardinals found matching the filters.</p>";
+          return;
+        }
+        cardinals.forEach(({ name, country, age, url, imageUrl }) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.onclick = () => { if (url) window.open(url, '_blank'); };
+          card.innerHTML = `
+            ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
+            <div class="card-content">
+              <h2>${name}</h2>
+              <p>${country}</p>
+              <p>Age: ${age}</p>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      function populateFilters() {
+        const ageFilter = document.getElementById("ageFilter");
+        const countryFilter = document.getElementById("countryFilter");
+        const uniqueAges = [...new Set(cardinalsData.map(c => c.age))].sort((a,b)=>a-b);
+        uniqueAges.forEach(age => {
+          const opt = document.createElement("option"); opt.value = age; opt.textContent = age;
+          ageFilter.appendChild(opt);
+        });
+        const uniqueCountries = [...new Set(cardinalsData.map(c => c.country))].sort();
+        uniqueCountries.forEach(c => {
+          const opt = document.createElement("option"); opt.value = c; opt.textContent = c;
+          countryFilter.appendChild(opt);
+        });
+        filterCardinals();
+      }
+
+      function filterCardinals() {
+        const q = document.getElementById("searchBar").value.toLowerCase();
+        const selAge = document.getElementById("ageFilter").value;
+        const selCountry = document.getElementById("countryFilter").value;
+        filteredCardinals = cardinalsData.filter(c => c.name.toLowerCase().includes(q)
+          && (!selAge || c.age == selAge)
+          && (!selCountry || c.country === selCountry));
+        displayCardinals(filteredCardinals);
+        updateFilters();
+      }
+
+      function updateFilters() {
+        const selAge = document.getElementById("ageFilter").value;
+        const selCountry = document.getElementById("countryFilter").value;
+        const countriesForAge = selAge ? new Set(filteredCardinals.filter(c=>c.age==selAge).map(c=>c.country)) : new Set();
+        const agesForCountry = selCountry ? new Set(filteredCardinals.filter(c=>c.country===selCountry).map(c=>c.age)) : new Set();
+        for (let opt of document.getElementById("countryFilter").options) opt.disabled = selAge && !countriesForAge.has(opt.value);
+        for (let opt of document.getElementById("ageFilter").options) opt.disabled = selCountry && !agesForCountry.has(opt.value);
+      }
+
+      function createCharts() {
+        const ageCounts = {};
+        cardinalsData.forEach(c=>{ ageCounts[c.age]=(ageCounts[c.age]||0)+1; });
+        const ageLabels = Object.keys(ageCounts).sort((a,b)=>a-b);
+        const ageData = ageLabels.map(l=>ageCounts[l]);
+        new Chart(document.getElementById('ageChart').getContext('2d'),{
+          type:'bar',data:{ labels:ageLabels, datasets:[{ label:'Number of Cardinals', data:ageData }]},
+          options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true }}, plugins:{ legend:{ display:false } } }
+        });
+        
+        const natCounts = {};
+        cardinalsData.forEach(c=>{ natCounts[c.country] = (natCounts[c.country]||0)+1; });
+        singleCountries = Object.keys(natCounts).filter(k=>natCounts[k]===1);
+        const multiLabels = Object.keys(natCounts).filter(k=>natCounts[k]>1);
+        const multiData = multiLabels.map(k=>natCounts[k]);
+        const otherCount = singleCountries.length;
+        const labelsDisp = [...multiLabels,'Other'];
+        const dataDisp = [...multiData, otherCount];
+        natLabelsAll = Object.keys(natCounts);
+        natDataAll = natLabelsAll.map(k=>natCounts[k]);
+        new Chart(document.getElementById('nationalityChart').getContext('2d'),{
+          type:'pie', data:{ labels:labelsDisp, datasets:[{ data:dataDisp }]},
+          options:{ responsive:true, maintainAspectRatio:false, onClick:()=>openModal() }
+        });
+      }
+
+      function openModal() {
+        const listEl = document.getElementById('singleCountriesList');
+        listEl.innerHTML='';
+        singleCountries.forEach(c=>{ const li=document.createElement('li'); li.textContent=c; listEl.appendChild(li); });
+        new Chart(document.getElementById('modalPieChart').getContext('2d'),{
+          type:'pie', data:{ labels:natLabelsAll, datasets:[{ data:natDataAll }]}, options:{ responsive:true, maintainAspectRatio:false }
+        });
+        document.getElementById('pieModal').classList.add('show');
+      }
+
+      function closeModal() {
+        document.getElementById('pieModal').classList.remove('show');
+      }
+
+      function startCountdown() {
+        const conclaveDate = new Date('2025-05-07T10:00:00Z');
+        const cdEl = document.getElementById('countdown');
+        const timer = setInterval(()=>{
+          const diff = conclaveDate - new Date();
+          if (diff <= 0) { clearInterval(timer); cdEl.textContent='The conclave has begun!'; return; }
+          const d=Math.floor(diff/86400000), h=Math.floor((diff/3600000)%24), m=Math.floor((diff/60000)%60), s=Math.floor((diff/1000)%60);
+          cdEl.textContent=`${d}d ${h}h ${m}m ${s}s`;
+        },1000);
+      }
+    </script>
+  </body>
 </html>
