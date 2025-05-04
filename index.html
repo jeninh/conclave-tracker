@@ -361,16 +361,26 @@
 
     <section class="charts-container">
       <div class="chart-card">
-        <h2 class="section-title">Age Distribution of Cardinals</h2>
         <canvas id="ageChart"></canvas>
       </div>
       <div class="chart-card">
-          <h2 class="section-title">Nationality Distribution</h2>
-          <canvas id="nationalityChart"></canvas>
+        <canvas id="nationalityChart"></canvas>
       </div>
     </section>
 
-    
+    <div id="pieModal" class="modal">
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeModal()">×</button>
+        <h2>Nationality Breakdown</h2>
+        <div class="modal-body">
+          <canvas id="modalPieChart" class="modal-chart"></canvas>
+          <div class="modal-list">
+            <h3>Countries with only one cardinal:</h3>
+            <ul id="singleCountriesList"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="filters">
       <input type="text" id="searchBar" placeholder="Search for a cardinal by name..." oninput="filterCardinals()" />
@@ -528,19 +538,25 @@
         const dataDisp = [...multiData, otherCount];
         natLabelsAll = Object.keys(natCounts);
         natDataAll = natLabelsAll.map(k=>natCounts[k]);
+        new Chart(document.getElementById('nationalityChart').getContext('2d'),{
+          type:'pie', data:{ labels:labelsDisp, datasets:[{ data:dataDisp }]},
+          options:{ responsive:true, maintainAspectRatio:false, onClick:()=>openModal() }
+        });
+      }
 
-      new Chart(document.getElementById('nationalityChart').getContext('2d'), {
-        type: 'pie',
-        data: { labels: labelsDisp, datasets: [{ data: dataDisp }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-          legend: { display: false }
-          }
-        }
-      });
+      function openModal() {
+        const listEl = document.getElementById('singleCountriesList');
+        listEl.innerHTML='';
+        singleCountries.forEach(c=>{ const li=document.createElement('li'); li.textContent=c; listEl.appendChild(li); });
+        new Chart(document.getElementById('modalPieChart').getContext('2d'),{
+          type:'pie', data:{ labels:natLabelsAll, datasets:[{ data:natDataAll }]}, options:{ responsive:true, maintainAspectRatio:false }
+        });
+        document.getElementById('pieModal').classList.add('show');
+      }
 
+      function closeModal() {
+        document.getElementById('pieModal').classList.remove('show');
+      }
 
       function startCountdown() {
         const conclaveDate = new Date('2025-05-07T10:00:00Z');
