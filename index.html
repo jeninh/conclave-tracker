@@ -338,25 +338,15 @@
       />
       <h1>Papal Conclave Tracker</h1>
       <p class="subtitle">
-        Countdown to the election of the next pope
+        THE CONCLAVE HAS ENDED! HABEMUS PAPAM!
       </p>
       <div class="countdown" id="countdown">Loading...</div>
       <p class="note">
-        This is the official date as announced by the Vatican (https://vatican.va)
       </p>
       <div id="conclave-stats" class="stats-grid"></div>
-      <div class="embed-wrapper">
-        <iframe
-          width="560"
-          height="315"
-          src="https://www.youtube.com/embed/EEM7a3mHMR4?si=3pQHp31ghAD1XPhm"
-          title="YouTube video player"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
-        ></iframe>
-      </div>
+      <p class="subtitle">
+        Below are the tools and data that I created to track the Cardinal electors.
+      </p>
     </header>
 
     <section class="charts-container">
@@ -442,7 +432,7 @@
           { label: "Total eligible electors", value: getG(3) },
           { label: "Cardinal attendance", value: getG(6) },
           { label: "Ballots held", value: getG(9) },
-          { label: "The New Pope Is...", value: getG(12) },
+          { label: "(Formerly Cardinal Robert Francis Prevost)", value: getG(12) },
           { label: "Time until next ballot", value: getG(14) },
           { label: "Signal status", value: getG(16) },
         ].filter(s => s.value);
@@ -563,7 +553,7 @@
         const cdEl = document.getElementById('countdown');
         const timer = setInterval(()=>{
           const diff = conclaveDate - new Date();
-          if (diff <= 0) { clearInterval(timer); cdEl.textContent='The conclave has begun!'; return; }
+          if (diff <= 0) { clearInterval(timer); cdEl.textContent='The New Pope Is...'; return; }
           const d=Math.floor(diff/86400000), h=Math.floor((diff/3600000)%24), m=Math.floor((diff/60000)%60), s=Math.floor((diff/1000)%60);
           cdEl.textContent=`${d}d ${h}h ${m}m ${s}s`;
         },1000);
