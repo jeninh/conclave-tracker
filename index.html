@@ -344,6 +344,7 @@
       <p class="note">
       </p>
       <div id="conclave-stats" class="stats-grid"></div>
+    
       <p class="subtitle">
         Below are the tools and data that I created to track the Cardinal electors.
       </p>
@@ -420,34 +421,46 @@
         });
 
       function renderConclaveStats(csvText) {
-        const lines = csvText.split("\n");
-        const dataRows = lines.slice(1);
-        function getG(sheetRow) {
-          const row = dataRows[sheetRow - 2];
-          if (!row) return "";
-          const cols = row.split(",");
-          return cols[6]?.trim() || "";
-        }
-        const stats = [
-          { label: "Total eligible electors", value: getG(3) },
-          { label: "Cardinal attendance", value: getG(6) },
-          { label: "Ballots held", value: getG(9) },
-          { label: "(Formerly Cardinal Robert Francis Prevost)", value: getG(12) },
-          { label: "Time until next ballot", value: getG(14) },
-          { label: "Signal status", value: getG(16) },
-        ].filter(s => s.value);
-        const container = document.getElementById("conclave-stats");
-        container.innerHTML = "";
-        stats.forEach(({ label, value }) => {
-          const card = document.createElement("div");
-          card.className = "stat-card";
-          card.innerHTML = `
-            <div class="value">${value}</div>
-            <div class="label">${label}</div>
-          `;
-          container.appendChild(card);
-        });
-      }
+  const lines = csvText.split("\n");
+  const dataRows = lines.slice(1);
+  function getG(sheetRow) {
+    const row = dataRows[sheetRow - 2];
+    if (!row) return "";
+    const cols = row.split(",");
+    return cols[6]?.trim() || "";
+  }
+
+  const stats = [
+    { label: "Total eligible electors", value: getG(3) },
+    { label: "Cardinal attendance", value: getG(6) },
+    { label: "Ballots held", value: getG(9) },
+    {
+      label: "(Formerly Cardinal Robert Francis Prevost)",
+      value: getG(12),
+      imageUrl: getG(21),
+      caption: getG(23),
+      description: getG(25)
+    },
+    { label: "Time until next ballot", value: getG(14) },
+    { label: "Signal status", value: getG(16) },
+  ].filter(s => s.value);
+
+  const container = document.getElementById("conclave-stats");
+  container.innerHTML = "";
+  stats.forEach(({ label, value, imageUrl, caption, description }) => {
+    const card = document.createElement("div");
+    card.className = "stat-card";
+    card.innerHTML = `
+      <div class="value">${value}</div>
+      <div class="label">${label}</div>
+      ${imageUrl ? `<img src="${imageUrl}" alt="${caption || label}" style="max-width: 100%; height: auto; border-radius: 12px; margin-top: 10px;">` : ""}
+      ${caption ? `<div style="font-size: 0.85em; color: #666; margin-top: 5px;">${caption}</div>` : ""}
+      ${description ? `<p style="font-size: 0.9em; margin-top: 8px; color: #444;">${description}</p>` : ""}
+    `;
+    container.appendChild(card);
+  });
+}
+
 
       function displayCardinals(cardinals) {
         const container = document.getElementById("cardinals");
