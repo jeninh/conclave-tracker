@@ -18,6 +18,14 @@
         --note-light: #6b4e4e;
         --note-dark: #bfaeae;
       }
+    .card img + p {
+        font-style: italic;
+        color: var(--note-light);
+    }
+
+    body.dark-mode .card img + p {
+        color: var(--note-dark);
+    }
 
       body {
         font-family: Georgia, serif;
@@ -410,9 +418,9 @@
           rows.forEach(row => {
             const cols = row.split(",");
             if (cols.length < 5) return;
-            const [name, country, age, url, imageUrl] = cols;
+            const [name, country, age, url, imageUrl, caption] = cols;  
             if (!name || !country || !age) return;
-            cardinalsData.push({ name, country, age: parseInt(age, 10), url, imageUrl });
+            cardinalsData.push({ name, country, age: parseInt(age, 10), url, imageUrl, caption });
           });
 
           filteredCardinals = [...cardinalsData];
@@ -471,21 +479,20 @@
           container.innerHTML = "<p>No cardinals found matching the filters.</p>";
           return;
         }
-        cardinals.forEach(({ name, country, age, url, imageUrl }) => {
+        cardinals.forEach(({ name, country, age, url, imageUrl, caption }) => {
           const card = document.createElement("div");
           card.className = "card";
           card.onclick = () => { if (url) window.open(url, '_blank'); };
           card.innerHTML = `
-            ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
-            <div class="card-content">
-              <h2>${name}</h2>
-              <p>${country}</p>
-              <p>Age: ${age}</p>
-            </div>
-          `;
-          container.appendChild(card);
-        });
-      }
+  ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
+  ${caption ? `<p style="font-size: 0.85rem; text-align: center; margin: 0.5rem 1rem 0; color: var(--note-light);">${caption}</p>` : ""}
+  <div class="card-content">
+    <h2>${name}</h2>
+    <p>${country}</p>
+    <p>Age: ${age}</p>
+  </div>
+`;
+
 
       function populateFilters() {
         const ageFilter = document.getElementById("ageFilter");
