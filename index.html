@@ -399,189 +399,186 @@
       </a>
     </footer>
 
-    <script>
-      const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8ep2FhpQgO9ej6jFgRO5TIU3SbKhHvfs7_vZb8WXVmsx_rdQhlgdO-eB_mSBbRPc9UYQk5rjyhim/pub?gid=117323697&single=true&output=csv";
+	<script>
+		const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8ep2FhpQgO9ej6jFgRO5TIU3SbKhHvfs7_vZb8WXVmsx_rdQhlgdO-eB_mSBbRPc9UYQk5rjyhim/pub?gid=117323697&single=true&output=csv";
 
-      let cardinalsData = [];
-      let filteredCardinals = [];
-      let natLabelsAll = [];
-      let natDataAll = [];
-      let singleCountries = [];
+		let cardinalsData = [];
+		let filteredCardinals = [];
+		let natLabelsAll = [];
+		let natDataAll = [];
+		let singleCountries = [];
 
-      fetch(CSV_URL)
-        .then(response => response.text())
-        .then(text => {
-          renderConclaveStats(text);
+		fetch(CSV_URL)
+			.then(response => response.text())
+			.then(text => {
+				renderConclaveStats(text);
 
-          const rows = text.split("\n").slice(1);
-          rows.forEach(row => {
-            const cols = row.split(",");
-            if (cols.length < 5) return;
-            const [name, country, age, url, imageUrl, caption] = cols;  
-            if (!name || !country || !age) return;
-            cardinalsData.push({ name, country, age: parseInt(age, 10), url, imageUrl, caption });
-          });
+				const rows = text.split("\n").slice(1);
+				rows.forEach(row => {
+					const cols = row.split(",");
+					if (cols.length < 5) return;
+					const [name, country, age, url, imageUrl, caption] = cols;  
+					if (!name || !country || !age) return;
+					cardinalsData.push({ name, country, age: parseInt(age, 10), url, imageUrl, caption });
+				});
 
-          filteredCardinals = [...cardinalsData];
-          displayCardinals(filteredCardinals);
-          populateFilters();
-          createCharts();
-          startCountdown();
-        });
+				filteredCardinals = [...cardinalsData];
+				displayCardinals(filteredCardinals);
+				populateFilters();
+				createCharts();
+				startCountdown();
+			});
 
-      function renderConclaveStats(csvText) {
-  const lines = csvText.split("\n");
-  const dataRows = lines.slice(1);
-  function getG(sheetRow) {
-    const row = dataRows[sheetRow - 2];
-    if (!row) return "";
-    const cols = row.split(",");
-    return cols[6]?.trim() || "";
-  }
+		function renderConclaveStats(csvText) {
+			const lines = csvText.split("\n");
+			const dataRows = lines.slice(1);
+			function getG(sheetRow) {
+				const row = dataRows[sheetRow - 2];
+				if (!row) return "";
+				const cols = row.split(",");
+				return cols[6]?.trim() || "";
+			}
 
-  const stats = [
-    { label: "Total eligible electors", value: getG(3) },
-    { label: "Cardinal attendance", value: getG(6) },
-    { label: "Ballots held", value: getG(9) },
-    {
-      label: "(Formerly Cardinal Robert Francis Prevost)",
-      value: getG(12),
-      imageUrl: getG(21),
-      caption: getG(23),
-      description: getG(25)
-    },
-    { label: "Time until next ballot", value: getG(14) },
-    { label: "Signal status", value: getG(16) },
-  ].filter(s => s.value);
+			const stats = [
+				{ label: "Total eligible electors", value: getG(3) },
+				{ label: "Cardinal attendance", value: getG(6) },
+				{ label: "Ballots held", value: getG(9) },
+				{
+					label: "(Formerly Cardinal Robert Francis Prevost)",
+					value: getG(12),
+					imageUrl: getG(21),
+					caption: getG(23),
+					description: getG(25)
+				},
+				{ label: "Time until next ballot", value: getG(14) },
+				{ label: "Signal status", value: getG(16) },
+			].filter(s => s.value);
 
-  const container = document.getElementById("conclave-stats");
-  container.innerHTML = "";
-  stats.forEach(({ label, value, imageUrl, caption, description }) => {
-    const card = document.createElement("div");
-    card.className = "stat-card";
-    card.innerHTML = `
-      <div class="value">${value}</div>
-      <div class="label">${label}</div>
-      ${imageUrl ? `<img src="${imageUrl}" alt="${caption || label}" style="max-width: 100%; height: auto; border-radius: 12px; margin-top: 10px;">` : ""}
-      ${caption ? `<div style="font-size: 0.85em; color: #666; margin-top: 5px;">${caption}</div>` : ""}
-      ${description ? `<p style="font-size: 0.9em; margin-top: 8px; color: #444;">${description}</p>` : ""}
-    `;
-    container.appendChild(card);
-  });
-}
+			const container = document.getElementById("conclave-stats");
+			container.innerHTML = "";
+			stats.forEach(({ label, value, imageUrl, caption, description }) => {
+				const card = document.createElement("div");
+				card.className = "stat-card";
+				card.innerHTML = `
+					<div class="value">${value}</div>
+					<div class="label">${label}</div>
+					${imageUrl ? `<img src="${imageUrl}" alt="${caption || label}" style="max-width: 100%; height: auto; border-radius: 12px; margin-top: 10px;">` : ""}
+					${caption ? `<div style="font-size: 0.85em; color: #666; margin-top: 5px;">${caption}</div>` : ""}
+					${description ? `<p style="font-size: 0.9em; margin-top: 8px; color: #444;">${description}</p>` : ""}
+				`;
+				container.appendChild(card);
+			});
+		}
 
+		function displayCardinals(cardinals) {
+			const container = document.getElementById("cardinals");
+			container.innerHTML = "";
+			if (cardinals.length === 0) {
+				container.innerHTML = "<p>No cardinals found matching the filters.</p>";
+				return;
+			}
+			cardinals.forEach(({ name, country, age, url, imageUrl, caption }) => {
+				const card = document.createElement("div");
+				card.className = "card";
+				card.innerHTML = `
+					${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
+					${caption ? `<p style="font-size: 0.85rem; text-align: center; margin: 0.5rem 1rem 0; color: var(--note-light);">${caption}</p>` : ""}
+					<div class="card-content" onclick="window.open('${url}', '_blank')">
+						<h2>${name}</h2>
+						<p>${country}</p>
+						<p>Age: ${age}</p>
+					</div>
+				`;
+				container.appendChild(card);
+			});
+		}
 
-      function displayCardinals(cardinals) {
-        const container = document.getElementById("cardinals");
-        container.innerHTML = "";
-        if (cardinals.length === 0) {
-          container.innerHTML = "<p>No cardinals found matching the filters.</p>";
-          return;
-        }
-        cardinals.forEach(({ name, country, age, url, imageUrl, caption }) => {
-          const card = document.createElement("div");
-          card.className = "card";
-          card.onclick = () => { if (url) window.open(url, '_blank'); };
-          card.innerHTML = `
-  ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : ""}
-  ${caption ? `<p style="font-size: 0.85rem; text-align: center; margin: 0.5rem 1rem 0; color: var(--note-light);">${caption}</p>` : ""}
-  <div class="card-content">
-    <h2>${name}</h2>
-    <p>${country}</p>
-    <p>Age: ${age}</p>
-  </div>
-`;
-          container.appendChild(card);
-        });
-      }
+		function populateFilters() {
+			const ageFilter = document.getElementById("ageFilter");
+			const countryFilter = document.getElementById("countryFilter");
+			const uniqueAges = [...new Set(cardinalsData.map(c => c.age))].sort((a,b)=>a-b);
+			uniqueAges.forEach(age => {
+				const opt = document.createElement("option"); opt.value = age; opt.textContent = age;
+				ageFilter.appendChild(opt);
+			});
+			const uniqueCountries = [...new Set(cardinalsData.map(c => c.country))].sort();
+			uniqueCountries.forEach(c => {
+				const opt = document.createElement("option"); opt.value = c; opt.textContent = c;
+				countryFilter.appendChild(opt);
+			});
+			filterCardinals();
+		}
 
+		function filterCardinals() {
+			const q = document.getElementById("searchBar").value.toLowerCase();
+			const selAge = document.getElementById("ageFilter").value;
+			const selCountry = document.getElementById("countryFilter").value;
+			filteredCardinals = cardinalsData.filter(c => c.name.toLowerCase().includes(q)
+				&& (!selAge || c.age == selAge)
+				&& (!selCountry || c.country === selCountry));
+			displayCardinals(filteredCardinals);
+			updateFilters();
+		}
 
-      function populateFilters() {
-        const ageFilter = document.getElementById("ageFilter");
-        const countryFilter = document.getElementById("countryFilter");
-        const uniqueAges = [...new Set(cardinalsData.map(c => c.age))].sort((a,b)=>a-b);
-        uniqueAges.forEach(age => {
-          const opt = document.createElement("option"); opt.value = age; opt.textContent = age;
-          ageFilter.appendChild(opt);
-        });
-        const uniqueCountries = [...new Set(cardinalsData.map(c => c.country))].sort();
-        uniqueCountries.forEach(c => {
-          const opt = document.createElement("option"); opt.value = c; opt.textContent = c;
-          countryFilter.appendChild(opt);
-        });
-        filterCardinals();
-      }
+		function updateFilters() {
+			const selAge = document.getElementById("ageFilter").value;
+			const selCountry = document.getElementById("countryFilter").value;
+			const countriesForAge = selAge ? new Set(filteredCardinals.filter(c=>c.age==selAge).map(c=>c.country)) : new Set();
+			const agesForCountry = selCountry ? new Set(filteredCardinals.filter(c=>c.country===selCountry).map(c=>c.age)) : new Set();
+			for (let opt of document.getElementById("countryFilter").options) opt.disabled = selAge && !countriesForAge.has(opt.value);
+			for (let opt of document.getElementById("ageFilter").options) opt.disabled = selCountry && !agesForCountry.has(opt.value);
+		}
 
-      function filterCardinals() {
-        const q = document.getElementById("searchBar").value.toLowerCase();
-        const selAge = document.getElementById("ageFilter").value;
-        const selCountry = document.getElementById("countryFilter").value;
-        filteredCardinals = cardinalsData.filter(c => c.name.toLowerCase().includes(q)
-          && (!selAge || c.age == selAge)
-          && (!selCountry || c.country === selCountry));
-        displayCardinals(filteredCardinals);
-        updateFilters();
-      }
+		function createCharts() {
+			const ageCounts = {};
+			cardinalsData.forEach(c=>{ ageCounts[c.age]=(ageCounts[c.age]||0)+1; });
+			const ageLabels = Object.keys(ageCounts).sort((a,b)=>a-b);
+			const ageData = ageLabels.map(l=>ageCounts[l]);
+			new Chart(document.getElementById('ageChart').getContext('2d'),{
+				type:'bar',data:{ labels:ageLabels, datasets:[{ label:'Number of Cardinals', data:ageData }]},
+				options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true }}, plugins:{ legend:{ display:false } } }
+			});
+			
+			const natCounts = {};
+			cardinalsData.forEach(c=>{ natCounts[c.country] = (natCounts[c.country]||0)+1; });
+			singleCountries = Object.keys(natCounts).filter(k=>natCounts[k]===1);
+			const multiLabels = Object.keys(natCounts).filter(k=>natCounts[k]>1);
+			const multiData = multiLabels.map(k=>natCounts[k]);
+			const otherCount = singleCountries.length;
+			const labelsDisp = [...multiLabels,'Other'];
+			const dataDisp = [...multiData, otherCount];
+			natLabelsAll = Object.keys(natCounts);
+			natDataAll = natLabelsAll.map(k=>natCounts[k]);
+			new Chart(document.getElementById('nationalityChart').getContext('2d'),{
+				type:'pie', data:{ labels:labelsDisp, datasets:[{ data:dataDisp }]},
+				options:{ responsive:true, maintainAspectRatio:false, onClick:()=>openModal() }
+			});
+		}
 
-      function updateFilters() {
-        const selAge = document.getElementById("ageFilter").value;
-        const selCountry = document.getElementById("countryFilter").value;
-        const countriesForAge = selAge ? new Set(filteredCardinals.filter(c=>c.age==selAge).map(c=>c.country)) : new Set();
-        const agesForCountry = selCountry ? new Set(filteredCardinals.filter(c=>c.country===selCountry).map(c=>c.age)) : new Set();
-        for (let opt of document.getElementById("countryFilter").options) opt.disabled = selAge && !countriesForAge.has(opt.value);
-        for (let opt of document.getElementById("ageFilter").options) opt.disabled = selCountry && !agesForCountry.has(opt.value);
-      }
+		function openModal() {
+			const listEl = document.getElementById('singleCountriesList');
+			listEl.innerHTML='';
+			singleCountries.forEach(c=>{ const li=document.createElement('li'); li.textContent=c; listEl.appendChild(li); });
+			new Chart(document.getElementById('modalPieChart').getContext('2d'),{
+				type:'pie', data:{ labels:natLabelsAll, datasets:[{ data:natDataAll }]}, options:{ responsive:true, maintainAspectRatio:false }
+			});
+			document.getElementById('pieModal').classList.add('show');
+		}
 
-      function createCharts() {
-        const ageCounts = {};
-        cardinalsData.forEach(c=>{ ageCounts[c.age]=(ageCounts[c.age]||0)+1; });
-        const ageLabels = Object.keys(ageCounts).sort((a,b)=>a-b);
-        const ageData = ageLabels.map(l=>ageCounts[l]);
-        new Chart(document.getElementById('ageChart').getContext('2d'),{
-          type:'bar',data:{ labels:ageLabels, datasets:[{ label:'Number of Cardinals', data:ageData }]},
-          options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true }}, plugins:{ legend:{ display:false } } }
-        });
-        
-        const natCounts = {};
-        cardinalsData.forEach(c=>{ natCounts[c.country] = (natCounts[c.country]||0)+1; });
-        singleCountries = Object.keys(natCounts).filter(k=>natCounts[k]===1);
-        const multiLabels = Object.keys(natCounts).filter(k=>natCounts[k]>1);
-        const multiData = multiLabels.map(k=>natCounts[k]);
-        const otherCount = singleCountries.length;
-        const labelsDisp = [...multiLabels,'Other'];
-        const dataDisp = [...multiData, otherCount];
-        natLabelsAll = Object.keys(natCounts);
-        natDataAll = natLabelsAll.map(k=>natCounts[k]);
-        new Chart(document.getElementById('nationalityChart').getContext('2d'),{
-          type:'pie', data:{ labels:labelsDisp, datasets:[{ data:dataDisp }]},
-          options:{ responsive:true, maintainAspectRatio:false, onClick:()=>openModal() }
-        });
-      }
+		function closeModal() {
+			document.getElementById('pieModal').classList.remove('show');
+		}
 
-      function openModal() {
-        const listEl = document.getElementById('singleCountriesList');
-        listEl.innerHTML='';
-        singleCountries.forEach(c=>{ const li=document.createElement('li'); li.textContent=c; listEl.appendChild(li); });
-        new Chart(document.getElementById('modalPieChart').getContext('2d'),{
-          type:'pie', data:{ labels:natLabelsAll, datasets:[{ data:natDataAll }]}, options:{ responsive:true, maintainAspectRatio:false }
-        });
-        document.getElementById('pieModal').classList.add('show');
-      }
-
-      function closeModal() {
-        document.getElementById('pieModal').classList.remove('show');
-      }
-
-      function startCountdown() {
-        const conclaveDate = new Date('2025-05-07T10:00:00Z');
-        const cdEl = document.getElementById('countdown');
-        const timer = setInterval(()=>{
-          const diff = conclaveDate - new Date();
-          if (diff <= 0) { clearInterval(timer); cdEl.textContent='The New Pope Is...'; return; }
-          const d=Math.floor(diff/86400000), h=Math.floor((diff/3600000)%24), m=Math.floor((diff/60000)%60), s=Math.floor((diff/1000)%60);
-          cdEl.textContent=`${d}d ${h}h ${m}m ${s}s`;
-        },1000);
-      }
-    </script>
+		function startCountdown() {
+			const conclaveDate = new Date('2025-05-07T10:00:00Z');
+			const cdEl = document.getElementById('countdown');
+			const timer = setInterval(()=>{
+				const diff = conclaveDate - new Date();
+				if (diff <= 0) { clearInterval(timer); cdEl.textContent='The New Pope Is...'; return; }
+				const d=Math.floor(diff/86400000), h=Math.floor((diff/3600000)%24), m=Math.floor((diff/60000)%60), s=Math.floor((diff/1000)%60);
+				cdEl.textContent=`${d}d ${h}h ${m}m ${s}s`;
+			},1000);
+		}
+	</script>
   </body>
 </html>
